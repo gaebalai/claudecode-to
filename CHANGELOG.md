@@ -6,7 +6,7 @@
 
 ## Marketplace
 
-### [0.2.0] - 2026-05-12
+### [1.0.0] - 2026-05-12
 - 단일 플러그인 → multi-plugin marketplace 레이아웃으로 재구성.
 - `harness-edit` 와 `ui-style-lab` 을 각각 독립 플러그인으로 분리.
 - 디렉토리 구조 변경:
