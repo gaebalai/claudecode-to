@@ -1,0 +1,14 @@
+{
+  "name": "ui-style-lab",
+  "description": "Generate a single-file UI style comparison HTML. Switch between 10 presets, colors, fonts, and shapes; click a component to copy its code.",
+  "version": "1.1.0",
+  "author": {
+    "name": "Jaewoo Kim",
+    "email": "jaewoo@claudecode.to",
+    "url": "https://github.com/gaebalai"
+  },
+  "homepage": "https://github.com/gaebalai/claudecode-to",
+  "repository": "https://github.com/gaebalai/claudecode-to",
+  "license": "MIT",
+  "keywords": ["ui", "theme", "css", "preset", "html"]
+}

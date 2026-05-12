@@ -1,0 +1,14 @@
+{
+  "name": "harness-edit",
+  "description": "Visualize and edit Claude Code harness configuration (~/.claude/settings.json) through an interactive HTML editor. Receives diff JSON and safely applies changes.",
+  "version": "2.0.0",
+  "author": {
+    "name": "Jaewoo Kim",
+    "email": "jaewoo@claudecode.to",
+    "url": "https://github.com/gaebalai"
+  },
+  "homepage": "https://github.com/gaebalai/claudecode-to",
+  "repository": "https://github.com/gaebalai/claudecode-to",
+  "license": "MIT",
+  "keywords": ["settings", "harness", "visualizer", "config", "html"]
+}

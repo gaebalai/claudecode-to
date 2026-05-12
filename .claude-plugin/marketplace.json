@@ -1,0 +1,28 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claudecode.to",
+  "version": "0.2.0",
+  "description": "Claude Code 생산성 플러그인 모음 — by ClaudeCode.to",
+  "owner": {
+    "name": "Jaewoo Kim",
+    "email": "jaewoo@claudecode.to",
+    "url": "https://github.com/gaebalai"
+  },
+
+  "plugins": [
+    {
+      "name": "harness-edit",
+      "source": "./plugins/harness-edit",
+      "description": "Visualize and edit Claude Code harness configuration through an interactive HTML editor.",
+      "category": "productivity",
+      "tags": ["settings", "harness", "visualizer", "config"]
+    },
+    {
+      "name": "ui-style-lab",
+      "source": "./plugins/ui-style-lab",
+      "description": "Generate a UI style comparison HTML with 10 presets, color/font/shape switching, and click-to-copy code.",
+      "category": "productivity",
+      "tags": ["ui", "theme", "css", "preset"]
+    }
+  ]
+}

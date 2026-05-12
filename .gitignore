@@ -1,0 +1,24 @@
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Backups created by install scripts
+*.bak
+*.bak.*
+
+# Generated outputs
+output/
+ui-style-lab-*.html
+
+# Node (just in case)
+node_modules/
+
+# Logs
+*.log
