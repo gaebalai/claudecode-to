@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "claudecode.to",
-  "version": "0.2.0",
+  "version": "1.1.0",
   "description": "Claude Code 생산성 플러그인 모음 — by ClaudeCode.to",
   "owner": {
     "name": "Jaewoo Kim",
@@ -23,6 +23,13 @@
       "description": "Generate a UI style comparison HTML with 10 presets, color/font/shape switching, and click-to-copy code.",
       "category": "productivity",
       "tags": ["ui", "theme", "css", "preset"]
+    },
+    {
+      "name": "blog-shotform-gen",
+      "source": "./plugins/blog-shotform-gen",
+      "description": "Turn one Korean blog URL into a 60-second 9:16 shortform mp4. ElevenLabs TTS + GPT Image 2 + Remotion v4 pipeline.",
+      "category": "content",
+      "tags": ["shortform", "video", "blog", "remotion", "elevenlabs", "openai"]
     }
   ]
 }

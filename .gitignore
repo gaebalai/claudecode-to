@@ -22,3 +22,11 @@ node_modules/
 
 # Logs
 *.log
+
+# Secrets — never commit .env files anywhere in the repo
+.env
+.env.*
+!.env.example
+plugins/**/.env
+plugins/**/.env.*
+!plugins/**/.env.example

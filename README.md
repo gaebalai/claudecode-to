@@ -10,6 +10,7 @@ Claude Code 생산성 플러그인 모음 — Marketplace 레포.
 |---|---|
 | [harness-edit](plugins/harness-edit/) | `.claude` 하네스 설정을 시각화 HTML 로 직관적으로 편집. GUI 에서 만든 차분 JSON 을 받아 `settings.json` 등에 안전하게 반영. |
 | [ui-style-lab](plugins/ui-style-lab/) | UI 스타일 비교용 단일 HTML 생성기. 프리셋 10 종 / 색 / 폰트 / 형상을 즉시 전환하고, 컴포넌트 클릭으로 코드를 복사. |
+| [blog-shotform-gen](plugins/blog-shotform-gen/) | 블로그 URL 1개로 60초 9:16 숏폼 mp4 자동 생성 파이프라인 (ElevenLabs TTS + GPT Image 2 + Remotion v4). API 키는 설치 스크립트가 입력받아 `~/.claude/skills/blog-url-to-shortform/.env` 에 저장. |
 
 앞으로 다른 플러그인도 같은 레포에 `plugins/<name>/` 로 추가됩니다.
 
@@ -23,6 +24,7 @@ Claude Code 안에서:
 /plugin marketplace add gaebalai/claudecode-to
 /plugin install harness-edit@claudecode.to
 /plugin install ui-style-lab@claudecode.to
+/plugin install blog-shotform-gen@claudecode.to
 ```
 
 호출 명령:
@@ -30,6 +32,7 @@ Claude Code 안에서:
 ```
 /harness-edit:harness-edit
 /ui-style-lab:ui-style-lab
+/blog-shotform-gen:blog-url-to-shortform
 ```
 
 업데이트:
@@ -81,8 +84,23 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 -All
 | `--backup` | `-Backup` | 기존을 `<name>.bak.YYYYMMDD-HHMMSS` 로 백업 |
 | `--dry-run` | `-DryRun` | 실제 변경 없이 동작만 출력 |
 | `--symlink` | `-Symlink` | 복사 대신 심볼릭 링크 (개발자용; Windows 는 관리자/개발자 모드 필요) |
+| `--skip-env` | `-SkipEnv` | API 키 입력 prompt 건너뛰기 (`.env.example` 만 복사) |
+| `--skip-deps` | `-SkipDeps` | 사전 의존성 (ffmpeg/python/node) 체크·설치 건너뛰기 |
 
 환경 변수 `CLAUDE_HOME` 으로 `~/.claude` 위치를 재정의할 수 있습니다.
+
+### `blog-shotform-gen` 설치 시 추가 동작
+
+이 플러그인은 ElevenLabs / OpenAI 유료 API 와 ffmpeg, Python, Node.js 를 사용하므로 인스톨러가 다음을 추가로 수행합니다 (다른 플러그인 설치 흐름에는 영향 없음):
+
+1. **사전 의존성 체크**: `ffmpeg`, `ffprobe`, `python3`, `node`, `npm` 존재 확인.
+   - macOS 에 `ffmpeg`이 없고 Homebrew 가 설치돼 있으면 `brew install ffmpeg` 진행 여부를 물어봅니다.
+   - `requests`, `beautifulsoup4` (Python) 패키지가 없으면 `pip install --user` 진행 여부를 물어봅니다.
+   - 위 두 가지는 `--skip-deps` 로 건너뛸 수 있습니다.
+2. **API 키 입력**: `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_A` / `ELEVENLABS_VOICE_B` / `OPENAI_API_KEY` (+선택값) 을 차례로 입력받아 `~/.claude/skills/blog-url-to-shortform/.env` 에 권한 0600 으로 저장합니다.
+   - 값을 비워두고 Enter 만 누르면 해당 항목은 빈 채로 저장되고, 나중에 직접 편집 가능합니다.
+   - 비대화형 셸(파이프·CI) 환경에서는 자동으로 `.env.example` 만 복사하고 prompt 는 건너뜁니다.
+   - `--skip-env` 로 강제로 건너뛸 수도 있습니다.
 
 ### 제거
 
@@ -97,10 +115,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 -All
 
 ## 호출명 대조표
 
-| 모드 | harness-edit | ui-style-lab |
-|---|---|---|
-| **Plugin** (Option A) | `/harness-edit:harness-edit` | `/ui-style-lab:ui-style-lab` |
-| **Standalone** (Option B) | `/harness-edit` | `/ui-style-lab` |
+| 모드 | harness-edit | ui-style-lab | blog-shotform-gen |
+|---|---|---|---|
+| **Plugin** (Option A) | `/harness-edit:harness-edit` | `/ui-style-lab:ui-style-lab` | `/blog-shotform-gen:blog-url-to-shortform` |
+| **Standalone** (Option B) | `/harness-edit` | `/ui-style-lab` | `/blog-url-to-shortform` |
 
 두 모드를 동시에 설치해도 namespace 가 달라 충돌하지 않습니다.
 
@@ -137,11 +155,18 @@ claudecode-to/                              # marketplace repo root
 │   │   └── skills/harness-edit/
 │   │       ├── SKILL.md
 │   │       └── references/{visualizer.html, schema.md}
-│   └── ui-style-lab/                       # 플러그인 2
+│   ├── ui-style-lab/                       # 플러그인 2
+│   │   ├── .claude-plugin/plugin.json
+│   │   └── skills/ui-style-lab/
+│   │       ├── SKILL.md
+│   │       └── template.html
+│   └── blog-shotform-gen/                  # 플러그인 3
 │       ├── .claude-plugin/plugin.json
-│       └── skills/ui-style-lab/
+│       ├── README.md
+│       └── skills/blog-url-to-shortform/
 │           ├── SKILL.md
-│           └── template.html
+│           ├── .env.example
+│           └── scripts/*.py
 ├── scripts/
 │   ├── install.sh
 │   ├── install.ps1

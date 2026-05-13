@@ -1,0 +1,14 @@
+{
+  "name": "blog-shotform-gen",
+  "description": "Generate a 60s vertical (9:16) shortform mp4 from a single Korean blog URL. Extracts body/images, drafts a 2-speaker script, then runs ElevenLabs TTS + GPT Image 2 and composes the video with Remotion v4.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jaewoo Kim",
+    "email": "jaewoo@claudecode.to",
+    "url": "https://github.com/gaebalai"
+  },
+  "homepage": "https://github.com/gaebalai/claudecode-to",
+  "repository": "https://github.com/gaebalai/claudecode-to",
+  "license": "MIT",
+  "keywords": ["shortform", "video", "blog", "remotion", "elevenlabs", "openai"]
+}

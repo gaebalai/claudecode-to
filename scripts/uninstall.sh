@@ -105,6 +105,20 @@ remove_skill() {
     esac
   fi
 
+  # Preserve any .env (API keys) before nuking the skill directory.
+  env_file="$dst/.env"
+  if [ -f "$env_file" ]; then
+    stamp="$(date +%Y%m%d-%H%M%S)"
+    bak="$dst.env.bak.$stamp"
+    if cp "$env_file" "$bak" 2>/dev/null; then
+      chmod 600 "$bak" 2>/dev/null || true
+      info "  Backed up .env → $bak"
+    else
+      warn "  Failed to back up $env_file — aborting remove to protect secrets."
+      return 1
+    fi
+  fi
+
   rm -rf "$dst"
   ok "Removed $skill."
 }

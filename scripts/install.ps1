@@ -11,6 +11,7 @@
 #   powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 -Plugin <name> -Backup
 #   powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 -Plugin <name> -DryRun
 #   powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 -Plugin <name> -Symlink
+#   powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 -Plugin blog-shotform-gen -SkipEnv -SkipDeps
 #
 # Env:
 #   CLAUDE_HOME   Override the default %USERPROFILE%\.claude
@@ -24,7 +25,9 @@ param(
     [switch]$Force,
     [switch]$Backup,
     [switch]$DryRun,
-    [switch]$Symlink
+    [switch]$Symlink,
+    [switch]$SkipEnv,
+    [switch]$SkipDeps
 )
 
 $ErrorActionPreference = 'Stop'
@@ -163,6 +166,174 @@ function Install-Plugin {
     Get-ChildItem -LiteralPath $skillsDir -Directory | ForEach-Object {
         Install-Skill -PluginName $PluginName -SkillName $_.Name
     }
+
+    Invoke-PostInstallHook -PluginName $PluginName
+}
+
+# ─── per-plugin post-install hooks ─────────────────────────────────────────
+function Invoke-PostInstallHook {
+    param([string]$PluginName)
+    switch ($PluginName) {
+        'blog-shotform-gen' { Invoke-BlogShortformHook }
+    }
+}
+
+function Test-BlogShortformDeps {
+    if ($SkipDeps) {
+        Write-Info "  Skipping dependency check (-SkipDeps)."
+        return
+    }
+
+    Write-Host ""
+    Write-Info "  Runtime dependency check (blog-url-to-shortform)"
+
+    $required = @('ffmpeg','ffprobe','python','node','npm')
+    $missing  = @()
+    foreach ($cli in $required) {
+        if (-not (Get-Command $cli -ErrorAction SilentlyContinue)) {
+            # python may be installed as python3 on some setups
+            if ($cli -eq 'python' -and (Get-Command 'python3' -ErrorAction SilentlyContinue)) { continue }
+            $missing += $cli
+        }
+    }
+
+    if ($missing.Count -gt 0) {
+        Write-Warn ("    Missing CLI tools: " + ($missing -join ', '))
+        Write-Warn "    Install them manually before first run:"
+        Write-Warn "      ffmpeg + ffprobe : https://www.gyan.dev/ffmpeg/builds/  (or 'winget install ffmpeg')"
+        Write-Warn "      Node.js v20 LTS+ : https://nodejs.org/  (or 'winget install OpenJS.NodeJS.LTS')"
+        Write-Warn "      Python 3.10+     : https://python.org   (or 'winget install Python.Python.3.12')"
+    } else {
+        Write-Ok "    ffmpeg / ffprobe / python / node / npm — all present."
+    }
+
+    $pythonBin = (Get-Command 'python' -ErrorAction SilentlyContinue)
+    if (-not $pythonBin) { $pythonBin = (Get-Command 'python3' -ErrorAction SilentlyContinue) }
+
+    if ($pythonBin) {
+        $hasDeps = $false
+        try {
+            & $pythonBin.Source -c 'import requests, bs4' 2>$null
+            if ($LASTEXITCODE -eq 0) { $hasDeps = $true }
+        } catch { }
+
+        if ($hasDeps) {
+            Write-Ok "    Python deps (requests, beautifulsoup4) — present."
+        } else {
+            Write-Warn "    Python deps missing: requests, beautifulsoup4."
+            $choice = Read-Host "    Run 'pip install --user requests beautifulsoup4' now? [Y/n]"
+            if ($choice -notmatch '^(n|N)') {
+                if ($DryRun) {
+                    Write-Host "  [dry-run] $($pythonBin.Source) -m pip install --user requests beautifulsoup4" -ForegroundColor DarkGray
+                } else {
+                    & $pythonBin.Source -m pip install --user --quiet requests beautifulsoup4
+                }
+            } else {
+                Write-Warn "    Skipped pip install — install manually before first run."
+            }
+        }
+    }
+}
+
+function Set-BlogShortformEnv {
+    if ($SkipEnv) {
+        Write-Info "  Skipping .env API-key prompt (-SkipEnv)."
+        return
+    }
+
+    $skillDir    = Join-Path $Target 'blog-url-to-shortform'
+    $envFile     = Join-Path $skillDir '.env'
+    $exampleFile = Join-Path $skillDir '.env.example'
+
+    if ($DryRun) {
+        Write-Host "  [dry-run] Would prompt for ELEVENLABS_API_KEY / VOICE_A / VOICE_B / OPENAI_API_KEY" -ForegroundColor DarkGray
+        Write-Host "  [dry-run] Would write to $envFile" -ForegroundColor DarkGray
+        return
+    }
+
+    if (-not (Test-Path -LiteralPath $skillDir -PathType Container)) {
+        Write-Warn "  Skill directory not present yet ($skillDir) — skipping .env setup."
+        return
+    }
+
+    # If the skill dir resolves inside this repo (e.g. -Symlink mode), do not
+    # write .env there — secrets must not end up under version control.
+    try {
+        $resolved = (Resolve-Path -LiteralPath $skillDir).ProviderPath
+        if ($resolved.StartsWith($RepoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+            Write-Warn "  $skillDir resolves inside the repo ($resolved)."
+            Write-Warn "  Refusing to write .env there — secrets must not end up under git."
+            Write-Warn "  Re-run without -Symlink, or set CLAUDE_HOME to a path outside the repo."
+            return
+        }
+    } catch { }
+
+    Write-Host ""
+    Write-Info "  API key setup → $envFile"
+
+    if (Test-Path -LiteralPath $envFile) {
+        if ($Force) {
+            Write-Warn "    Existing .env will be overwritten (-Force)."
+            Remove-Item -LiteralPath $envFile -Force
+        } else {
+            $choice = Read-Host "    Existing .env detected. [k]eep / [o]verwrite"
+            if ($choice -match '^(o|O)') {
+                Remove-Item -LiteralPath $envFile -Force
+            } else {
+                Write-Warn "    Keeping existing .env — skipped key prompt."
+                return
+            }
+        }
+    }
+
+    Write-Host "    Press Enter to leave a value blank (you can edit $envFile later)."
+    Write-Host ""
+
+    function _PromptKey {
+        param([string]$Description, [string]$Default)
+        if ($Default) {
+            $label = "    $Description [$Default]"
+        } else {
+            $label = "    $Description"
+        }
+        $value = Read-Host $label
+        if (-not $value -and $Default) { return $Default }
+        return $value
+    }
+
+    $elevenKey   = _PromptKey "ELEVENLABS_API_KEY (https://elevenlabs.io/app/settings/api-keys)" ""
+    $voiceA      = _PromptKey "ELEVENLABS_VOICE_A   (e.g. Rosa Oh, 한국어 여성 voice id)"      ""
+    $voiceB      = _PromptKey "ELEVENLABS_VOICE_B   (e.g. Joon Park, 한국어 남성 voice id)"     ""
+    $elevenModel = _PromptKey "ELEVENLABS_MODEL     (Enter = default)"                          "eleven_multilingual_v2"
+    $openaiKey   = _PromptKey "OPENAI_API_KEY       (https://platform.openai.com/api-keys)"    ""
+    $imgModel    = _PromptKey "OPENAI_IMAGE_MODEL   (Enter = default)"                          "gpt-image-2"
+    $imgSize     = _PromptKey "OPENAI_IMAGE_SIZE    (Enter = default)"                          "1024x1536"
+
+    $timestamp = Get-Date -Format 'yyyy-MM-ddTHH:mm:ss'
+    $contents = @"
+# blog-url-to-shortform — generated by install.ps1 on $timestamp
+# Do NOT commit this file.
+
+ELEVENLABS_API_KEY=$elevenKey
+ELEVENLABS_VOICE_A=$voiceA
+ELEVENLABS_VOICE_B=$voiceB
+ELEVENLABS_MODEL=$elevenModel
+
+OPENAI_API_KEY=$openaiKey
+OPENAI_IMAGE_MODEL=$imgModel
+OPENAI_IMAGE_SIZE=$imgSize
+"@
+    Set-Content -LiteralPath $envFile -Value $contents -Encoding UTF8
+
+    Write-Ok "    Wrote $envFile."
+    Write-Host "    You can edit it later if a key was left blank."
+}
+
+function Invoke-BlogShortformHook {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions','')]
+    param()
+    Test-BlogShortformDeps
+    Set-BlogShortformEnv
 }
 
 function Main {
@@ -199,7 +370,8 @@ function Main {
     Write-Host ""
     Write-Host "Next steps" -ForegroundColor White
     Write-Host "  1. Restart Claude Code, or run /reload-skills in an existing session."
-    Write-Host "  2. Invoke the installed skills by their standalone names (e.g. /harness-edit, /ui-style-lab)."
+    Write-Host "  2. Invoke the installed skills by their standalone names"
+    Write-Host "     (e.g. /harness-edit, /ui-style-lab, /blog-url-to-shortform)."
     if ($DryRun) {
         Write-Host ""
         Write-Warn "Dry-run only — nothing was modified."
