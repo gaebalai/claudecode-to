@@ -6,6 +6,10 @@
 
 ## Marketplace
 
+### [1.2.0] - 2026-05-20
+- `mbti-16types` 플러그인 추가. MBTI 16타입 인격 에이전트를 소환해 어떤 주제든 병렬로 토론·리뷰·조언.
+- 마켓플레이스 `version` 1.1.0 → 1.2.0.
+
 ### [1.1.0] - 2026-05-13
 - `blog-shotform-gen` 플러그인 추가. 블로그 URL 1개 → 60초 9:16 mp4 자동 생성 파이프라인.
 - `scripts/install.sh` / `scripts/install.ps1`:
@@ -45,3 +49,8 @@
 - 신규 플러그인. 블로그 URL 1개를 받아 60초 세로 숏폼 영상(mp4)을 자동 생성.
 - 한국 블로그 4종(티스토리/네이버/벨로그/브런치) 본문·이미지 추출 → 2인 대화 대본 → ElevenLabs TTS + GPT Image 2 → Remotion v4 합성.
 - `~/.claude/skills/blog-url-to-shortform/.env` 에 API 키 보관 (인스톨러가 생성).
+
+### `mbti-16types` v1.0.0 — 2026-05-20
+- 신규 플러그인. MBTI 16타입의 인격 에이전트를 소환해 주제를 병렬로 토론·리뷰·조언.
+- 커맨드: `/mind`(단일 타입 의견), `/pair`(2타입 디베이트), `/minds`(전체 16타입 병렬 + 합의 도출).
+- light/middle/heavy 3단계 모드. `/minds --save` 로 실행 결과를 파일로 저장.

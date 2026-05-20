@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "claudecode.to",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Claude Code 생산성 플러그인 모음 — by ClaudeCode.to",
   "owner": {
     "name": "Jaewoo Kim",
@@ -30,6 +30,13 @@
       "description": "Turn one Korean blog URL into a 60-second 9:16 shortform mp4. ElevenLabs TTS + GPT Image 2 + Remotion v4 pipeline.",
       "category": "content",
       "tags": ["shortform", "video", "blog", "remotion", "elevenlabs", "openai"]
+    },
+    {
+      "name": "mbti-16types",
+      "source": "./plugins/MBTI-16types",
+      "description": "Summon 16 personality-type agents to debate any topic, review code, or stress-test ideas.",
+      "category": "productivity",
+      "tags": ["mbti", "agents", "debate", "brainstorm", "personality"]
     }
   ]
 }
