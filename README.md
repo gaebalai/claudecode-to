@@ -11,6 +11,7 @@ Claude Code 생산성 플러그인 모음 — Marketplace 레포.
 | [harness-edit](plugins/harness-edit/) | `.claude` 하네스 설정을 시각화 HTML 로 직관적으로 편집. GUI 에서 만든 차분 JSON 을 받아 `settings.json` 등에 안전하게 반영. |
 | [ui-style-lab](plugins/ui-style-lab/) | UI 스타일 비교용 단일 HTML 생성기. 프리셋 10 종 / 색 / 폰트 / 형상을 즉시 전환하고, 컴포넌트 클릭으로 코드를 복사. |
 | [blog-shotform-gen](plugins/blog-shotform-gen/) | 블로그 URL 1개로 60초 9:16 숏폼 mp4 자동 생성 파이프라인 (ElevenLabs TTS + GPT Image 2 + Remotion v4). API 키는 설치 스크립트가 입력받아 `~/.claude/skills/blog-url-to-shortform/.env` 에 저장. |
+| [mbti-16types](plugins/MBTI-16types/) | MBTI 16타입 인격 에이전트를 소환해 어떤 주제든 병렬로 토론·리뷰·조언. `/minds` 는 16타입을 동시에 호출해 합의를 도출. 아이디어 도출·설계 판단·코드 리뷰 등에 활용. *(command/agent 기반 — Marketplace 설치 전용)* |
 
 앞으로 다른 플러그인도 같은 레포에 `plugins/<name>/` 로 추가됩니다.
 
@@ -25,6 +26,7 @@ Claude Code 안에서:
 /plugin install harness-edit@claudecode.to
 /plugin install ui-style-lab@claudecode.to
 /plugin install blog-shotform-gen@claudecode.to
+/plugin install mbti-16types@claudecode.to
 ```
 
 호출 명령:
@@ -33,6 +35,7 @@ Claude Code 안에서:
 /harness-edit:harness-edit
 /ui-style-lab:ui-style-lab
 /blog-shotform-gen:blog-url-to-shortform
+/mbti-16types:mind   /mbti-16types:minds   /mbti-16types:pair
 ```
 
 업데이트:
@@ -53,6 +56,8 @@ Claude Code 안에서:
 ## 설치 — Option B: Shell script
 
 `~/.claude/skills/` 에 직접 복사하는 방식입니다. standalone 호출명(`/harness-edit`, `/ui-style-lab`)을 그대로 쓸 수 있습니다.
+
+> ⚠️ `mbti-16types` 는 skill 이 아닌 command/agent 기반 플러그인이라 Shell script 설치를 지원하지 않습니다. **Marketplace(Option A)로만 설치**하세요.
 
 ### macOS / Linux
 
@@ -122,6 +127,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install.ps1 -All
 
 두 모드를 동시에 설치해도 namespace 가 달라 충돌하지 않습니다.
 
+`mbti-16types` 는 Plugin 모드 전용이며, 커맨드는 `/mbti-16types:mind`, `/mbti-16types:minds`, `/mbti-16types:pair` 입니다.
+
 ---
 
 ## 검증
@@ -160,13 +167,18 @@ claudecode-to/                              # marketplace repo root
 │   │   └── skills/ui-style-lab/
 │   │       ├── SKILL.md
 │   │       └── template.html
-│   └── blog-shotform-gen/                  # 플러그인 3
+│   ├── blog-shotform-gen/                  # 플러그인 3
+│   │   ├── .claude-plugin/plugin.json
+│   │   ├── README.md
+│   │   └── skills/blog-url-to-shortform/
+│   │       ├── SKILL.md
+│   │       ├── .env.example
+│   │       └── scripts/*.py
+│   └── MBTI-16types/                       # 플러그인 4 (command/agent 기반)
 │       ├── .claude-plugin/plugin.json
-│       ├── README.md
-│       └── skills/blog-url-to-shortform/
-│           ├── SKILL.md
-│           ├── .env.example
-│           └── scripts/*.py
+│       ├── README.md  /  README.en.md
+│       ├── commands/{mind,minds,pair}.md
+│       └── agents/<16타입>.md
 ├── scripts/
 │   ├── install.sh
 │   ├── install.ps1
