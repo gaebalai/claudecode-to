@@ -19,7 +19,7 @@ description: 블로그 URL 1개를 받아 60초 9:16 숏폼 영상(mp4)을 자�
 
 | 항목 | 필수 | 비고 |
 |---|---|---|
-| 블로그 URL | ✅ | 티스토리/네이버/벨로그/브런치 우선 |
+| URL | ✅ | 블로그 4종(티스토리/네이버/벨로그/브런치) 또는 GitHub repo |
 | 톤 | ❌ | 기본: 친근한 한국어 구어체 |
 | 화자 | ❌ | 기본: Rosa Oh (30대 여성, 리드) + Joon Park (20대 후반 남성, 리액션) |
 | 길이 | ❌ | 기본 60초 |
@@ -51,13 +51,24 @@ OPENAI_API_KEY=...
 사용자가 URL 하나를 던지면 시작. 형식 검증(http/https로 시작).
 
 ### Step 1.2: 본문 추출
+
+URL 호스트로 어느 스크립트를 호출할지 결정:
+
 ```bash
+# 블로그 4종
 python3 ~/.claude/skills/blog-url-to-shortform/scripts/extract_blog.py "<URL>" \
     > <project_dir>/extracted.json
+
+# GitHub repo (README.md 자동 fetch)
+python3 ~/.claude/skills/blog-url-to-shortform/scripts/extract_github.py "<URL>" \
+    > <project_dir>/extracted.json
 ```
-- stdout이 JSON. 키 `{platform, url, title, body, body_images, char_count}`
+
+- stdout이 JSON. 키 `{platform, url, title, body, body_images, char_count}` (두 스크립트 모두 동일)
 - **반드시 프로젝트 디렉토리에 `extracted.json`으로 저장** (Phase 2 Step 2.6에서 본문 이미지 substitute에 사용)
-- 플랫폼 자동 감지: 도메인 매칭(`tistory.com`, `blog.naver.com`/`m.blog.naver.com`, `velog.io`, `brunch.co.kr`)
+- 자동 감지:
+  - 블로그 4종 — `tistory.com` / `blog.naver.com` / `m.blog.naver.com` / `velog.io` / `brunch.co.kr` → `extract_blog.py`
+  - GitHub — `github.com/<owner>/<repo>` → `extract_github.py` (main/master × 5 README 파일명 폴백, miss 시 GitHub API default_branch 재시도, shields.io 배지 자동 필터)
 - 네이버는 iframe 재요청을 자동 처리
 - 본문이 500자 미만이면 경고 메시지
 
